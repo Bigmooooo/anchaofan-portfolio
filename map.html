@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>作品配对编辑 · 导演简历</title>
+<style>
+  :root{
+    --bg:#0a0a0c;--bg-soft:#121216;--panel:#16161b;--line:#26262e;
+    --text:#ececf1;--muted:#9a9aa6;--accent:#c8a24a;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font-family:"Noto Sans SC",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;}
+  header{padding:28px 20px 14px;max-width:1200px;margin:0 auto;}
+  h1{font-family:"Noto Serif SC",serif;font-size:1.6rem;margin:0 0 6px;letter-spacing:.04em}
+  .sub{color:var(--muted);font-size:.85rem;line-height:1.6}
+  .bar{max-width:1200px;margin:0 auto;padding:0 20px 18px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .bar button{background:var(--panel);color:var(--text);border:1px solid var(--line);
+    padding:8px 14px;border-radius:8px;cursor:pointer;font-size:.82rem;letter-spacing:.05em}
+  .bar button:hover{border-color:var(--accent);color:var(--accent)}
+  .bar .count{color:var(--muted);font-size:.8rem;margin-left:auto}
+  .grid{max-width:1200px;margin:0 auto;padding:0 20px 60px;
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;
+    display:flex;flex-direction:column}
+  .card.changed{border-color:var(--accent)}
+  .thumb{position:relative;aspect-ratio:16/9;background:#000;overflow:hidden}
+  .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+  .thumb .badge{position:absolute;top:8px;left:8px;background:var(--accent);color:#1a1a1a;
+    font-size:.65rem;font-weight:700;padding:2px 7px;border-radius:6px;letter-spacing:.05em}
+  .meta{padding:10px 12px;display:flex;flex-direction:column;gap:8px;flex:1}
+  .title{font-size:.82rem;line-height:1.35;color:var(--text)}
+  .file{font-size:.68rem;color:var(--muted);font-family:ui-monospace,monospace}
+  .pick{margin-top:auto;background:transparent;border:1px solid var(--line);color:var(--muted);
+    padding:7px 10px;border-radius:8px;cursor:pointer;font-size:.78rem}
+  .pick:hover{border-color:var(--accent);color:var(--accent)}
+  /* 选图弹层 */
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:100;display:none;
+    padding:24px;overflow:auto}
+  .overlay.open{display:block}
+  .overlay__head{max-width:1100px;margin:0 auto 14px;display:flex;align-items:center;gap:12px}
+  .overlay__head h2{font-family:"Noto Serif SC",serif;font-size:1.1rem;margin:0;flex:1}
+  .overlay__head button{background:var(--panel);border:1px solid var(--line);color:var(--text);
+    padding:6px 12px;border-radius:8px;cursor:pointer}
+  .pool{max-width:1100px;margin:0 auto;display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+  .pool figure{margin:0;cursor:pointer;border:2px solid transparent;border-radius:10px;overflow:hidden;
+    background:#000;position:relative}
+  .pool figure:hover{border-color:var(--accent)}
+  .pool img{width:100%;aspect-ratio:16/9;object-fit:cover;display:block}
+  .pool figcaption{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.6);
+    font-size:.66rem;padding:3px 6px;color:#fff;font-family:ui-monospace,monospace}
+</style>
+</head>
+<body>
+<header>
+  <h1>作品配对编辑</h1>
+  <p class="sub">点每张卡片下方的「换图」，从全部 30 张海报里挑正确的换上。改动存在本浏览器本地，<b>先在本机预览确认</b>，觉得 OK 后点「导出配对」把结果发我，我写回源码（手机/电脑永久生效）。</p>
+</header>
+<div class="bar">
+  <button id="reset">重置全部</button>
+  <button id="export">导出配对 JSON</button>
+  <a href="index.html" target="_blank" style="color:var(--muted);font-size:.8rem;text-decoration:none;border:1px solid var(--line);padding:8px 14px;border-radius:8px">打开线上简历 ↗</a>
+  <span class="count" id="count"></span>
+</div>
+<div class="grid" id="grid"></div>
+
+<div class="overlay" id="overlay">
+  <div class="overlay__head">
+    <h2 id="ovTitle">选择海报</h2>
+    <button id="ovClose">关闭</button>
+  </div>
+  <div class="pool" id="pool"></div>
+</div>
+
+<script>
+/* ===== 作品清单（标题 + 当前默认图），与 main.js 的 WORKS 保持同步 ===== */
+const WORKS = [
+  { t:"PUBGM 年轻化 品牌PV", img:"assets/img/poster_015.jpg" },
+  { t:"京东生肖兔《兔哪》", img:"assets/img/poster_001.jpg" },
+  { t:"泡泡玛特x迪士尼", img:"assets/img/poster_002.jpg" },
+  { t:"POPMART泡泡玛特《小帽子 寻找大象滑梯》", img:"assets/img/poster_028.jpg" },
+  { t:"蔚来 萤火虫《自在玩家》", img:"assets/img/poster_004.jpg" },
+  { t:"和平精英x田曦薇官宣视频", img:"assets/img/poster_005.jpg" },
+  { t:"京东超市 年货节病毒篇", img:"assets/img/poster_006.jpg" },
+  { t:"穿越火线：张碧晨MV《一念封神》", img:"assets/img/poster_007.jpg" },
+  { t:"穿越火线《CFMx变形金刚 突变复古动画》", img:"assets/img/poster_008.jpg" },
+  { t:"和平精英x吴京：《开局就超爆》", img:"assets/img/poster_009.jpg" },
+  { t:"天猫超品日年终盘点", img:"assets/img/poster_010.jpg" },
+  { t:"PUBGM 半人马PV", img:"assets/img/poster_012.jpg" },
+  { t:"第五人格《昨日之笼》PV", img:"assets/img/poster_013.jpg" },
+  { t:"穿越火线 《CFM七周年浪漫巨献》", img:"assets/img/poster_014.jpg" },
+  { t:"逆战未来 猪猪侠PV", img:"assets/img/poster_011.jpg" },
+  { t:"第五人格 2026五骥映春主题CG", img:"assets/img/poster_016.jpg" },
+  { t:"英雄联盟手游x世界杯TCL《一起开秀敢为不同》", img:"assets/img/poster_017.jpg" },
+  { t:"宝马x和平精英病毒视频", img:"assets/img/poster_018.jpg" },
+  { t:"京东x浪浪山《小妖怪的夏天 618特辑》", img:"assets/img/poster_019.jpg" },
+  { t:"和平精英《谓龙的传人》", img:"assets/img/poster_020.jpg" },
+  { t:"和平精英《汇聚全宇宙的力量TVC》动画部分", img:"assets/img/poster_021.jpg" },
+  { t:"LOLM x CocaCola品牌营销动画", img:"assets/img/poster_022.jpg" },
+  { t:"上汽大众CNY", img:"assets/img/poster_023.jpg" },
+  { t:"京东买药x雄狮少年《就是快！》", img:"assets/img/poster_024.jpg" },
+  { t:"京东超市x上美影《蜈蚣精居然技高一筹》", img:"assets/img/poster_010.jpg" },
+  { t:"《陈唐关的百姓有福了》", img:"assets/img/poster_026.jpg" },
+  { t:"京东大促《炸年兽》", img:"assets/img/poster_027.jpg" },
+  { t:"美团CNY", img:"assets/img/poster_028.jpg" },
+];
+const POOL = Array.from({length:30}, (_,i)=>`assets/img/poster_${String(i+1).padStart(3,"0")}.jpg`);
+const KEY = "workImgs";
+const overrides = JSON.parse(localStorage.getItem(KEY) || "{}");
+let activeTitle = null;
+
+const grid = document.getElementById("grid");
+const overlay = document.getElementById("overlay");
+const pool = document.getElementById("pool");
+const ovTitle = document.getElementById("ovTitle");
+
+function currentImg(w){ return overrides[w.t] || w.img; }
+function fileOf(src){ return src.split("/").pop(); }
+
+function render(){
+  grid.innerHTML = WORKS.map((w,i)=>{
+    const cur = currentImg(w);
+    const changed = !!overrides[w.t];
+    return `<div class="card${changed?" changed":""}" data-t="${w.t}">
+      <div class="thumb">
+        <img src="${cur}" alt="${w.t}" />
+        ${changed?'<span class="badge">已改</span>':''}
+      </div>
+      <div class="meta">
+        <div class="title">${i+1}. ${w.t}</div>
+        <div class="file">${fileOf(cur)}</div>
+        <button class="pick" data-t="${w.t}">换图</button>
+      </div>
+    </div>`;
+  }).join("");
+  const n = Object.keys(overrides).length;
+  document.getElementById("count").textContent = `已调整 ${n} / ${WORKS.length} 项`;
+}
+
+function openPicker(title){
+  activeTitle = title;
+  ovTitle.textContent = "为「" + title + "」选择海报";
+  pool.innerHTML = POOL.map(src=>{
+    const sel = currentImg(WORKS.find(w=>w.t===title))===src ? ' style="border-color:var(--accent)"' : '';
+    return `<figure data-src="${src}"${sel}><img src="${src}" loading="lazy"/><figcaption>${fileOf(src)}</figcaption></figure>`;
+  }).join("");
+  overlay.classList.add("open");
+}
+function closePicker(){ overlay.classList.remove("open"); activeTitle=null; }
+
+pool.addEventListener("click", e=>{
+  const fig = e.target.closest("figure"); if(!fig||!activeTitle) return;
+  overrides[activeTitle] = fig.dataset.src;
+  localStorage.setItem(KEY, JSON.stringify(overrides));
+  closePicker(); render();
+});
+grid.addEventListener("click", e=>{
+  const btn = e.target.closest(".pick"); if(!btn) return;
+  openPicker(btn.dataset.t);
+});
+document.getElementById("ovClose").addEventListener("click", closePicker);
+overlay.addEventListener("click", e=>{ if(e.target===overlay) closePicker(); });
+
+document.getElementById("reset").addEventListener("click", ()=>{
+  if(confirm("确定清除所有本地配对修改？")){
+    localStorage.removeItem(KEY);
+    for(const k in overrides) delete overrides[k];
+    render();
+  }
+});
+document.getElementById("export").addEventListener("click", ()=>{
+  const out = WORKS.map(w=>({ title:w.t, img:currentImg(w) }));
+  const blob = new Blob([JSON.stringify(out,null,2)], {type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "work_imgs_mapping.json";
+  a.click();
+});
+
+render();
+</script>
+</body>
+</html>

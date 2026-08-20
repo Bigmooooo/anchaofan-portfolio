@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>作品排序后台 · 导演简历</title>
+<style>
+  :root{
+    --bg:#0a0a0c;--bg-soft:#121216;--panel:#16161b;--line:#26262e;
+    --text:#ececf1;--muted:#9a9aa6;--accent:#c8a24a;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font-family:"Noto Sans SC",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;}
+  header{padding:28px 20px 12px;max-width:980px;margin:0 auto}
+  h1{font-family:"Noto Serif SC",serif;font-size:1.6rem;margin:0 0 6px;letter-spacing:.04em}
+  .sub{color:var(--muted);font-size:.85rem;line-height:1.6}
+  .bar{max-width:980px;margin:0 auto;padding:0 20px 14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .bar button{background:var(--panel);color:var(--text);border:1px solid var(--line);
+    padding:8px 14px;border-radius:8px;cursor:pointer;font-size:.82rem;letter-spacing:.05em}
+  .bar button:hover{border-color:var(--accent);color:var(--accent)}
+  .bar .count{color:var(--muted);font-size:.8rem;margin-left:auto}
+  .list{max-width:980px;margin:0 auto;padding:0 20px 60px;display:flex;flex-direction:column;gap:10px}
+  .row{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    display:flex;align-items:center;gap:12px;padding:10px 12px;cursor:grab;}
+  .row.dragging{opacity:.4;border-color:var(--accent)}
+  .row.over{border-color:var(--accent)}
+  .handle{color:var(--muted);font-size:1.1rem;cursor:grab;user-select:none}
+  .idx{font-family:ui-monospace,monospace;color:var(--accent);font-size:.9rem;width:26px;text-align:right}
+  .mini{width:96px;height:54px;object-fit:cover;border-radius:6px;background:#000;flex:0 0 auto}
+  .ttl{flex:1;font-size:.86rem;line-height:1.35}
+  .ops{display:flex;gap:6px;flex:0 0 auto}
+  .ops button{background:transparent;border:1px solid var(--line);color:var(--muted);
+    width:34px;height:32px;border-radius:8px;cursor:pointer;font-size:1rem}
+  .ops button:hover{border-color:var(--accent);color:var(--accent)}
+  .ops button:disabled{opacity:.3;cursor:default}
+  .hint{max-width:980px;margin:0 auto;padding:0 20px 24px;color:var(--muted);font-size:.78rem;line-height:1.7}
+</style>
+</head>
+<body>
+<header>
+  <h1>作品排序后台</h1>
+  <p class="sub">拖拽每行（或用 ↑↓ 按钮，移动端更顺手）调整作品上下顺序。改动存在本浏览器本地，<b>先在本机打开简历预览确认</b>，OK 后点「导出排序」把结果发我，我写回源码（手机/电脑永久生效）。</p>
+</header>
+<div class="bar">
+  <button id="export">导出排序 JSON</button>
+  <button id="reset">恢复默认顺序</button>
+  <a href="index.html" target="_blank" style="color:var(--muted);font-size:.8rem;text-decoration:none;border:1px solid var(--line);padding:8px 14px;border-radius:8px">打开线上简历 ↗</a>
+  <span class="count" id="count"></span>
+</div>
+<div class="hint">提示：本地排序只存在当前浏览器，换设备/清缓存会丢失，所以最终一定要走「导出 → 我写回源码」这一步才稳妥。</div>
+<div class="list" id="list"></div>
+
+<script>
+/* ===== 作品清单（标题 + 当前默认图），与 main.js 的 WORKS 顺序保持一致 ===== */
+const WORKS = [
+  { t:"PUBGM 年轻化 品牌PV", img:"assets/img/poster_015.jpg" },
+  { t:"京东生肖兔《兔哪》", img:"assets/img/poster_001.jpg" },
+  { t:"泡泡玛特x迪士尼", img:"assets/img/poster_006.jpg" },
+  { t:"POPMART泡泡玛特《小帽子 寻找大象滑梯》", img:"assets/img/poster_028.jpg" },
+  { t:"蔚来 萤火虫《自在玩家》", img:"assets/img/poster_003.jpg" },
+  { t:"和平精英x田曦薇官宣视频", img:"assets/img/poster_029.jpg" },
+  { t:"京东超市 年货节病毒篇", img:"assets/img/poster_009.jpg" },
+  { t:"穿越火线：张碧晨MV《一念封神》", img:"assets/img/poster_021.jpg" },
+  { t:"穿越火线《CFMx变形金刚 突变复古动画》", img:"assets/img/poster_023.jpg" },
+  { t:"和平精英x吴京：《开局就超爆》", img:"assets/img/poster_026.jpg" },
+  { t:"天猫超品日年终盘点", img:"assets/img/poster_018.jpg" },
+  { t:"PUBGM 半人马PV", img:"assets/img/poster_017.jpg" },
+  { t:"第五人格《昨日之笼》PV", img:"assets/img/poster_016.jpg" },
+  { t:"穿越火线 《CFM七周年浪漫巨献》", img:"assets/img/poster_012.jpg" },
+  { t:"逆战未来 猪猪侠PV", img:"assets/img/poster_002.jpg" },
+  { t:"第五人格 2026五骥映春主题CG", img:"assets/img/poster_014.jpg" },
+  { t:"英雄联盟手游x世界杯TCL《一起开秀敢为不同》", img:"assets/img/poster_024.jpg" },
+  { t:"宝马x和平精英病毒视频", img:"assets/img/poster_022.jpg" },
+  { t:"京东x浪浪山《小妖怪的夏天 618特辑》", img:"assets/img/poster_013.jpg" },
+  { t:"和平精英《谓龙的传人》", img:"assets/img/poster_027.jpg" },
+  { t:"和平精英《汇聚全宇宙的力量TVC》动画部分", img:"assets/img/poster_020.jpg" },
+  { t:"LOLM x CocaCola品牌营销动画", img:"assets/img/poster_019.jpg" },
+  { t:"上汽大众CNY", img:"assets/img/poster_004.jpg" },
+  { t:"京东买药x雄狮少年《就是快！》", img:"assets/img/poster_005.jpg" },
+  { t:"京东超市x上美影《蜈蚣精居然技高一筹》", img:"assets/img/poster_010.jpg" },
+  { t:"《陈唐关的百姓有福了》", img:"assets/img/poster_008.jpg" },
+  { t:"京东大促《炸年兽》", img:"assets/img/poster_011.jpg" },
+  { t:"美团CNY", img:"assets/img/poster_007.jpg" },
+];
+
+const KEY = "workOrder";
+const defaultOrder = WORKS.map(w=>w.t);
+let order = JSON.parse(localStorage.getItem(KEY) || "null");
+if(!Array.isArray(order) || order.length!==defaultOrder.length || !order.every(t=>defaultOrder.includes(t))){
+  order = defaultOrder.slice();
+}
+// 复用配对编辑页的本地换图覆盖，预览时图也同步
+const workImgs = JSON.parse(localStorage.getItem("workImgs") || "{}");
+const imgOf = (w) => workImgs[w.t] || w.img;
+
+const list = document.getElementById("list");
+function render(){
+  list.innerHTML = order.map((t,i)=>{
+    const w = WORKS.find(x=>x.t===t);
+    return `<div class="row" draggable="true" data-t="${t}">
+      <span class="handle">⠿</span>
+      <span class="idx">${String(i+1).padStart(2,"0")}</span>
+      <img class="mini" src="${imgOf(w)}" alt="${w.t}" loading="lazy" />
+      <span class="ttl">${w.t}</span>
+      <span class="ops">
+        <button data-act="up" data-t="${t}" ${i===0?"disabled":""}>↑</button>
+        <button data-act="down" data-t="${t}" ${i===order.length-1?"disabled":""}>↓</button>
+      </span>
+    </div>`;
+  }).join("");
+  document.getElementById("count").textContent = `${order.length} 个作品`;
+}
+function save(){ localStorage.setItem(KEY, JSON.stringify(order)); }
+
+list.addEventListener("click", e=>{
+  const btn = e.target.closest("button[data-act]"); if(!btn) return;
+  const t = btn.dataset.t; const i = order.indexOf(t);
+  if(btn.dataset.act==="up" && i>0){ [order[i-1],order[i]]=[order[i],order[i-1]]; }
+  if(btn.dataset.act==="down" && i<order.length-1){ [order[i+1],order[i]]=[order[i],order[i+1]]; }
+  save(); render();
+});
+
+/* 拖拽排序 */
+let dragT = null;
+list.addEventListener("dragstart", e=>{
+  const row = e.target.closest(".row"); if(!row) return;
+  dragT = row.dataset.t; row.classList.add("dragging");
+});
+list.addEventListener("dragend", e=>{
+  const row = e.target.closest(".row"); if(row) row.classList.remove("dragging");
+  document.querySelectorAll(".row.over").forEach(r=>r.classList.remove("over"));
+  dragT = null;
+});
+list.addEventListener("dragover", e=>{
+  e.preventDefault();
+  const row = e.target.closest(".row"); if(!row || !dragT) return;
+  document.querySelectorAll(".row.over").forEach(r=>r.classList.remove("over"));
+  row.classList.add("over");
+});
+list.addEventListener("drop", e=>{
+  e.preventDefault();
+  const target = e.target.closest(".row"); if(!target || !dragT) return;
+  const from = order.indexOf(dragT);
+  const to = order.indexOf(target.dataset.t);
+  if(from<0 || to<0 || from===to) return;
+  order.splice(from,1);
+  order.splice(to,0,dragT);
+  save(); render();
+});
+
+document.getElementById("reset").addEventListener("click", ()=>{
+  if(confirm("确定恢复默认顺序？")){ order = defaultOrder.slice(); save(); render(); }
+});
+document.getElementById("export").addEventListener("click", ()=>{
+  const blob = new Blob([JSON.stringify(order,null,2)], {type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "work_order.json";
+  a.click();
+});
+
+render();
+</script>
+</body>
+</html>

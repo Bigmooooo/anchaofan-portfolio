@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>安大墨 · 导演作品集</title>
+  <meta name="description" content="安大墨 — 资深动画导演 / 广告内容创作人。CG · AIGC · 2D 全风格，深耕游戏、电商、汽车品牌视效。" />
+  <!-- 本地自托管字体（不依赖 Google Fonts，国内外均稳定） -->
+  <link rel="stylesheet" href="assets/fonts/oswald/300.css" />
+  <link rel="stylesheet" href="assets/fonts/oswald/400.css" />
+  <link rel="stylesheet" href="assets/fonts/oswald/500.css" />
+  <link rel="stylesheet" href="assets/fonts/oswald/600.css" />
+  <link rel="stylesheet" href="assets/fonts/oswald/700.css" />
+  <link rel="stylesheet" href="assets/fonts/playfair-display/500.css" />
+  <link rel="stylesheet" href="assets/fonts/playfair-display/600.css" />
+  <link rel="stylesheet" href="assets/fonts/playfair-display/700.css" />
+  <link rel="stylesheet" href="assets/fonts/playfair-display/500-italic.css" />
+  <link rel="stylesheet" href="assets/fonts/playfair-display/600-italic.css" />
+  <link rel="stylesheet" href="assets/fonts/playfair-display/700-italic.css" />
+  <link rel="stylesheet" href="assets/fonts/zcool-qingke-huangyou/400.css" />
+  <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+  <div class="grain" aria-hidden="true"></div>
+  <div class="vignette" aria-hidden="true"></div>
+
+  <div class="scroll-progress" id="scrollProgress" aria-hidden="true"></div>
+
+  <header class="nav" id="nav">
+    <a class="nav__logo" href="#about">ANDAMOO</a>
+    <nav class="nav__links">
+      <a href="#works">ABOUT</a>
+      <a href="#contact">CONTACT</a>
+    </nav>
+  </header>
+
+  <section class="hero" id="hero">
+    <canvas class="hero__bg" id="heroAtom" aria-hidden="true"></canvas>
+    <div class="hero__veil"></div>
+    <div class="hero__deco hero__deco--tl">SELECTED WORKS<br />2018 — 2026</div>
+    <div class="hero__deco hero__deco--tr">CG · AIGC · 2D<br />MOTION / DIRECTION</div>
+    <div class="hero__deco hero__deco--bl">AN CHAOFAN<br />STUDIO</div>
+    <div class="hero__deco hero__deco--br">©2026 / ALL RIGHTS RESERVED</div>
+    <div class="hero__inner">
+      <p class="hero__eyebrow">DIRECTOR PORTFOLIO</p>
+      <img class="hero__name-img" src="assets/img/hero_logo.png" alt="安大墨 ANDAMO DIRECTOR" />
+      <p class="hero__tagline">动画导演 · 广告内容创作人</p>
+      <a class="hero__scroll" href="#about" aria-label="向下滚动">
+        <span>SCROLL</span>
+        <span class="hero__scroll-line"></span>
+      </a>
+    </div>
+  </section>
+
+  <section class="section about" id="about">
+    <div class="section__head">
+      <span class="section__index">01</span>
+      <h2 class="section__title">简介 <em>About</em></h2>
+    </div>
+    <div class="about__body">
+      <p class="about__lead">资深动画导演 · 广告内容创作人</p>
+      <p>擅长 <strong>CG / AIGC / 2D</strong> 等全风格创作，并长期担任项目美术总监。十余年深耕游戏、电商互联网与汽车品牌的视效及内容制作，近年专注于 AI 视频创作，经验丰富。</p>
+      <ul class="about__tags">
+        <li>CG 视效</li>
+        <li>AIGC / AI 视频</li>
+        <li>2D 动画</li>
+        <li>实拍 + 特效</li>
+        <li>项目美术总监</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="section works" id="works">
+    <div class="section__head">
+      <span class="section__index">02</span>
+      <h2 class="section__title">作品 <em>Selected Works</em></h2>
+    </div>
+    <div class="works__grid" id="worksGrid"></div>
+  </section>
+
+  <section class="section brands" id="brands">
+    <div class="section__head">
+      <span class="section__index">03</span>
+      <h2 class="section__title">服务厂牌 <em>Partners</em></h2>
+    </div>
+    <div class="brands__marquee">
+      <div class="brands__track" id="brandsTrack"></div>
+    </div>
+  </section>
+
+  <section class="section contact" id="contact">
+    <div class="section__head">
+      <span class="section__index">04</span>
+      <h2 class="section__title">联系 <em>Contact</em></h2>
+    </div>
+    <div class="contact__body">
+      <p class="contact__lead">期待与品牌、平台与创作者的合作。</p>
+      <ul class="contact__list" id="contactList"></ul>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <span>© 2026 安大墨</span>
+    <span class="footer__sep">/</span>
+    <span>Director Portfolio</span>
+  </footer>
+
+  <script src="assets/js/vendor/three.min.js"></script>
+  <script src="assets/js/hero-atom.js"></script>
+  <script src="assets/js/main.js"></script>
+</body>
+</html>
